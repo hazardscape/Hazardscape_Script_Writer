@@ -2,6 +2,11 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import Anthropic from "@anthropic-ai/sdk";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import { existsSync } from "fs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -102,6 +107,15 @@ Write the full script — do not summarize or abbreviate any section.`;
 });
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+
+// Serve React frontend in production
+const publicPath = join(__dirname, "public");
+if (existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+  app.get("*", (_req, res) => {
+    res.sendFile(join(publicPath, "index.html"));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Hazardscape Script Writer backend running on port ${PORT}`);
