@@ -1,0 +1,44 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --brand-orange: #ff6b35;
+  --brand-dark: #1a1a2e;
+  --brand-mid: #16213e;
+  --brand-accent: #0f3460;
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0b0;
+  --border: #2a2a4a;
+  --input-bg: #0d0d1f;
+  --card-bg: #1a1a2e;
+  --success: #4caf50;
+  --error: #f44336;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: #0d0d1f;
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--brand-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brand-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-orange);
+}
