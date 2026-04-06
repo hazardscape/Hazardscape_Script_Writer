@@ -26,6 +26,7 @@ export default function ScriptForm({ onGenerate, isGenerating }) {
     tone: "entertaining",
     duration: "10",
     additionalNotes: "",
+    sourceUrls: "",
   });
 
   function handleChange(e) {
@@ -35,7 +36,11 @@ export default function ScriptForm({ onGenerate, isGenerating }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    onGenerate(form);
+    const sourceUrls = form.sourceUrls
+      .split("\n")
+      .map((u) => u.trim())
+      .filter((u) => u.startsWith("http"));
+    onGenerate({ ...form, sourceUrls });
   }
 
   const isValid = form.title.trim() && form.topic.trim();
@@ -173,6 +178,22 @@ export default function ScriptForm({ onGenerate, isGenerating }) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Source URLs */}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="sourceUrls">
+            Source URLs <span className={styles.optional}>(one per line — Claude will read these pages)</span>
+          </label>
+          <textarea
+            id="sourceUrls"
+            name="sourceUrls"
+            value={form.sourceUrls}
+            onChange={handleChange}
+            placeholder={`e.g.\nhttps://en.wikipedia.org/wiki/Waverly_Hills_Sanatorium\nhttps://www.example.com/article`}
+            className={`${styles.input} ${styles.textarea}`}
+            rows={3}
+          />
         </div>
 
         {/* Additional Notes */}

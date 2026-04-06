@@ -16,6 +16,23 @@ app.use(express.json());
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+async function fetchUrlContent(url) {
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; HazardscapeBot/1.0)" },
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!response.ok) throw new Error(`Failed to fetch URL (${response.status})`);
+  const html = await response.text();
+  // Strip tags, collapse whitespace, cap at 15,000 chars
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 15000);
+}
+
 app.post("/api/generate-script", async (req, res) => {
   const {
     scriptType,
@@ -26,6 +43,7 @@ app.post("/api/generate-script", async (req, res) => {
     duration,
     guestName,
     additionalNotes,
+    sourceUrls,
   } = req.body;
 
   if (!title || !topic) {
@@ -38,6 +56,20 @@ app.post("/api/generate-script", async (req, res) => {
     "20": "approximately 20 minutes (2,500–3,000 words)",
     "30": "30+ minutes (3,500+ words)",
   };
+
+  // Fetch source URLs if provided
+  let urlContext = "";
+  if (sourceUrls && sourceUrls.length > 0) {
+    const results = await Promise.allSettled(sourceUrls.map(fetchUrlContent));
+    const fetched = results
+      .map((r, i) =>
+        r.status === "fulfilled"
+          ? `--- Source: ${sourceUrls[i]} ---\n${r.value}`
+          : `--- Source: ${sourceUrls[i]} (failed to fetch) ---`
+      )
+      .join("\n\n");
+    urlContext = `\n\nREFERENCE MATERIAL (fetched from provided URLs — use this as factual source material):\n${fetched}`;
+  }
 
   const typeLabel = scriptType === "podcast" ? "podcast episode" : "YouTube video";
   const guestLine = guestName ? `\n- Guest/Co-host: ${guestName}` : "";
@@ -62,7 +94,7 @@ Always write in the specified tone and match the target duration closely.`;
 - Target Duration: ${durationMap[duration] || "approximately 10 minutes"}
 - Key Talking Points:
 ${pointsList}
-${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ""}
+${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ""}${urlContext}
 
 Format the script with:
 1. **[INTRO]** — A strong hook to grab the audience immediately
