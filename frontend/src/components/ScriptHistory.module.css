@@ -95,6 +95,18 @@
   font-style: italic;
 }
 
+.partialBadge {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  color: #ffc107;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .cardActions {
   display: flex;
   gap: 10px;

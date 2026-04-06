@@ -18,77 +18,110 @@ function saveHistory(history) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
+async function streamInto(url, body, onChunk) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || "Server error");
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    for (const line of decoder.decode(value, { stream: true }).split("\n")) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const payload = JSON.parse(line.slice(6));
+        if (payload.error) throw new Error(payload.error);
+        if (payload.done) return;
+        if (payload.text) onChunk(payload.text);
+      } catch (e) {
+        if (e.message !== "Unexpected end of JSON input") throw e;
+      }
+    }
+  }
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("write");
   const [script, setScript] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPartial, setIsPartial] = useState(false);
   const [currentMeta, setCurrentMeta] = useState(null);
   const [history, setHistory] = useState(loadHistory);
   const [error, setError] = useState("");
 
+  function persistEntry(meta, text, partial) {
+    const entry = {
+      id: Date.now(),
+      title: meta.title,
+      scriptType: meta.scriptType,
+      tone: meta.tone,
+      duration: meta.duration,
+      script: text,
+      partial,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [entry, ...history].slice(0, 20);
+    setHistory(updated);
+    saveHistory(updated);
+    return entry;
+  }
+
   async function handleGenerate(formData) {
     setError("");
     setScript("");
+    setIsPartial(false);
     setIsGenerating(true);
     setCurrentMeta(formData);
     setActiveTab("result");
 
+    let fullScript = "";
     try {
-      const response = await fetch("/api/generate-script", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      await streamInto("/api/generate-script", formData, (chunk) => {
+        fullScript += chunk;
+        setScript(fullScript);
       });
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Server error");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullScript = "";
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const payload = JSON.parse(line.slice(6));
-            if (payload.error) throw new Error(payload.error);
-            if (payload.done) break;
-            if (payload.text) {
-              fullScript += payload.text;
-              setScript(fullScript);
-            }
-          } catch (parseErr) {
-            if (parseErr.message !== "Unexpected end of JSON input") {
-              throw parseErr;
-            }
-          }
-        }
-      }
-
-      // Save to history
-      const entry = {
-        id: Date.now(),
-        title: formData.title,
-        scriptType: formData.scriptType,
-        tone: formData.tone,
-        duration: formData.duration,
-        script: fullScript,
-        createdAt: new Date().toISOString(),
-      };
-      const updated = [entry, ...history].slice(0, 20);
-      setHistory(updated);
-      saveHistory(updated);
+      persistEntry(formData, fullScript, false);
     } catch (err) {
       setError(err.message);
+      if (fullScript) {
+        setIsPartial(true);
+        persistEntry(formData, fullScript, true);
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  async function handleContinue() {
+    if (!currentMeta || !script) return;
+    setError("");
+    setIsPartial(false);
+    setIsGenerating(true);
+
+    let continued = script;
+    try {
+      await streamInto(
+        "/api/continue-script",
+        { partialScript: script, ...currentMeta },
+        (chunk) => {
+          continued += chunk;
+          setScript(continued);
+        }
+      );
+      persistEntry(currentMeta, continued, false);
+    } catch (err) {
+      setError(err.message);
+      if (continued !== script) {
+        setIsPartial(true);
+        persistEntry(currentMeta, continued, true);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -97,6 +130,7 @@ export default function App() {
   function handleLoadHistory(entry) {
     setCurrentMeta(entry);
     setScript(entry.script);
+    setIsPartial(entry.partial || false);
     setActiveTab("result");
   }
 
@@ -152,9 +186,11 @@ export default function App() {
           <ScriptDisplay
             script={script}
             isGenerating={isGenerating}
+            isPartial={isPartial}
             meta={currentMeta}
             error={error}
             onNewScript={() => setActiveTab("write")}
+            onContinue={handleContinue}
           />
         )}
         {activeTab === "history" && (

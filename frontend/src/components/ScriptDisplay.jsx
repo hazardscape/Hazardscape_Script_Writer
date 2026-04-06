@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./ScriptDisplay.module.css";
 
-export default function ScriptDisplay({ script, isGenerating, meta, error, onNewScript }) {
+export default function ScriptDisplay({
+  script, isGenerating, isPartial, meta, error, onNewScript, onContinue,
+}) {
   const [copied, setCopied] = useState(false);
   const scriptRef = useRef(null);
 
@@ -35,9 +37,7 @@ export default function ScriptDisplay({ script, isGenerating, meta, error, onNew
         <div className={styles.errorIcon}>⚠️</div>
         <h2>Generation Failed</h2>
         <p>{error}</p>
-        <button className={styles.newBtn} onClick={onNewScript}>
-          Try Again
-        </button>
+        <button className={styles.newBtn} onClick={onNewScript}>Try Again</button>
       </div>
     );
   }
@@ -48,9 +48,7 @@ export default function ScriptDisplay({ script, isGenerating, meta, error, onNew
         <div className={styles.emptyIcon}>📄</div>
         <h2>No Script Yet</h2>
         <p>Fill out the form to generate your first script.</p>
-        <button className={styles.newBtn} onClick={onNewScript}>
-          Write a Script
-        </button>
+        <button className={styles.newBtn} onClick={onNewScript}>Write a Script</button>
       </div>
     );
   }
@@ -65,6 +63,9 @@ export default function ScriptDisplay({ script, isGenerating, meta, error, onNew
             </span>
             <h2 className={styles.scriptTitle}>{meta.title}</h2>
             <span className={styles.metaDetail}>{meta.tone} · ~{meta.duration} min</span>
+            {isPartial && (
+              <span className={styles.partialTag}>⚠ Incomplete</span>
+            )}
           </div>
           <div className={styles.actions}>
             {isGenerating && (
@@ -74,6 +75,11 @@ export default function ScriptDisplay({ script, isGenerating, meta, error, onNew
             )}
             {!isGenerating && script && (
               <>
+                {isPartial && (
+                  <button className={styles.continueBtn} onClick={onContinue}>
+                    ▶ Continue Script
+                  </button>
+                )}
                 <button className={styles.actionBtn} onClick={handleCopy}>
                   {copied ? "✓ Copied!" : "Copy"}
                 </button>
@@ -98,8 +104,14 @@ export default function ScriptDisplay({ script, isGenerating, meta, error, onNew
         <div className={styles.footer}>
           <span className={styles.wordCount}>
             {script.split(/\s+/).filter(Boolean).length} words
+            {isPartial && " · incomplete"}
           </span>
           <div className={styles.footerActions}>
+            {isPartial && (
+              <button className={styles.continueBtn} onClick={onContinue}>
+                ▶ Continue Script
+              </button>
+            )}
             <button className={styles.actionBtn} onClick={handleCopy}>
               {copied ? "✓ Copied!" : "Copy Script"}
             </button>

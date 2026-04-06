@@ -97,6 +97,35 @@
   color: #ff6b35;
 }
 
+.partialTag {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.continueBtn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Inter", sans-serif;
+  white-space: nowrap;
+}
+
+.continueBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
 .newBtnSmall {
   padding: 8px 16px;
   background: linear-gradient(135deg, #ff6b35, #ff9f1c);

@@ -41,7 +41,10 @@ export default function ScriptHistory({ history, onLoad, onDelete }) {
               </span>
               <span className={styles.date}>{formatDate(entry.createdAt)}</span>
             </div>
-            <h3 className={styles.cardTitle}>{entry.title}</h3>
+            <h3 className={styles.cardTitle}>
+              {entry.title}
+              {entry.partial && <span className={styles.partialBadge}>Incomplete</span>}
+            </h3>
             <div className={styles.cardMeta}>
               <span className={styles.pill}>{entry.tone}</span>
               <span className={styles.pill}>~{entry.duration} min</span>

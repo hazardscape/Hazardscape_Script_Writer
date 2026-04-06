@@ -138,6 +138,54 @@ Write the full script — do not summarize or abbreviate any section.`;
   }
 });
 
+app.post("/api/continue-script", async (req, res) => {
+  const { partialScript, title, scriptType, tone, duration } = req.body;
+
+  if (!partialScript) {
+    return res.status(400).json({ error: "No partial script provided." });
+  }
+
+  const typeLabel = scriptType === "podcast" ? "podcast episode" : "YouTube video";
+
+  const systemPrompt = `You are an expert script writer for Hazardscape, a media brand focused on engaging storytelling.
+You write compelling, well-structured scripts for podcasts and YouTube videos.
+Your scripts are energetic, engaging, and formatted professionally with clear sections, speaker cues, and transitions.`;
+
+  const userPrompt = `The following ${typeLabel} script for "${title}" was cut off mid-generation. Continue it seamlessly from exactly where it stopped — do not repeat any content, do not add a heading or preamble, just continue the script naturally from the last word:
+
+${partialScript}`;
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  try {
+    const stream = client.messages.stream({
+      model: "claude-opus-4-6",
+      max_tokens: 16000,
+      thinking: { type: "adaptive" },
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`);
+      }
+    }
+
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
+  } catch (err) {
+    console.error("Continue script error:", err);
+    res.write(`data: ${JSON.stringify({ error: err.message || "Failed to continue script." })}\n\n`);
+    res.end();
+  }
+});
+
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
 // Serve React frontend in production
