@@ -23,6 +23,24 @@
   font-size: 1rem;
 }
 
+.clearBtn {
+  margin-top: 12px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  color: #a0a0b0;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  transition: all 0.2s;
+}
+
+.clearBtn:hover {
+  border-color: #f44336;
+  color: #f44336;
+}
+
 .form {
   display: flex;
   flex-direction: column;

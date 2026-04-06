@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./ScriptForm.module.css";
 
 const TONES = [
@@ -16,18 +16,27 @@ const DURATIONS = [
   { value: "30", label: "30+ min", sub: "Long form" },
 ];
 
-export default function ScriptForm({ onGenerate, isGenerating }) {
-  const [form, setForm] = useState({
-    scriptType: "podcast",
-    title: "",
-    topic: "",
-    guestName: "",
-    keyPoints: "",
-    tone: "entertaining",
-    duration: "10",
-    additionalNotes: "",
-    sourceUrls: "",
-  });
+const DEFAULT_FORM = {
+  scriptType: "podcast",
+  title: "",
+  topic: "",
+  guestName: "",
+  keyPoints: "",
+  tone: "entertaining",
+  duration: "10",
+  additionalNotes: "",
+  sourceUrls: "",
+};
+
+export default function ScriptForm({ onGenerate, isGenerating, initialValues, onDraftLoaded }) {
+  const [form, setForm] = useState(initialValues || DEFAULT_FORM);
+
+  useEffect(() => {
+    if (initialValues) {
+      setForm(initialValues);
+      onDraftLoaded?.();
+    }
+  }, [initialValues]);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -45,13 +54,28 @@ export default function ScriptForm({ onGenerate, isGenerating }) {
 
   const isValid = form.title.trim() && form.topic.trim();
 
+  const isDraft = !!(initialValues || form.title);
+
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
-        <h1 className={styles.heroTitle}>Create Your Script</h1>
+        <h1 className={styles.heroTitle}>
+          {initialValues ? "Edit & Regenerate" : "Create Your Script"}
+        </h1>
         <p className={styles.heroSub}>
-          Powered by Claude AI — generate professional podcast & YouTube scripts in seconds
+          {initialValues
+            ? "Update the details below and generate a new version of this script"
+            : "Powered by Claude AI — generate professional podcast & YouTube scripts in seconds"}
         </p>
+        {initialValues && (
+          <button
+            className={styles.clearBtn}
+            onClick={() => setForm(DEFAULT_FORM)}
+            type="button"
+          >
+            ✕ Clear & start fresh
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>

@@ -130,6 +130,24 @@
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
 }
 
+.editBtn {
+  padding: 8px 16px;
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  color: #ff6b35;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Inter", sans-serif;
+}
+
+.editBtn:hover {
+  background: rgba(255, 107, 53, 0.2);
+  border-color: #ff6b35;
+}
+
 .deleteBtn {
   padding: 8px 16px;
   background: transparent;

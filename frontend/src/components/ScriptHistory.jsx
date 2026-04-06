@@ -1,6 +1,6 @@
 import styles from "./ScriptHistory.module.css";
 
-export default function ScriptHistory({ history, onLoad, onDelete }) {
+export default function ScriptHistory({ history, onLoad, onEdit, onDelete }) {
   if (history.length === 0) {
     return (
       <div className={styles.empty}>
@@ -56,6 +56,9 @@ export default function ScriptHistory({ history, onLoad, onDelete }) {
             <div className={styles.cardActions}>
               <button className={styles.loadBtn} onClick={() => onLoad(entry)}>
                 Open Script
+              </button>
+              <button className={styles.editBtn} onClick={() => onEdit(entry)}>
+                Edit & Regenerate
               </button>
               <button
                 className={styles.deleteBtn}

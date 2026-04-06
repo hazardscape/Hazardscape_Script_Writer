@@ -55,14 +55,21 @@ export default function App() {
   const [currentMeta, setCurrentMeta] = useState(null);
   const [history, setHistory] = useState(loadHistory);
   const [error, setError] = useState("");
+  const [draftForm, setDraftForm] = useState(null);
 
   function persistEntry(meta, text, partial) {
     const entry = {
       id: Date.now(),
+      // Store full form data so it can be loaded back into the form
       title: meta.title,
       scriptType: meta.scriptType,
+      topic: meta.topic || "",
+      guestName: meta.guestName || "",
+      keyPoints: meta.keyPoints || "",
       tone: meta.tone,
       duration: meta.duration,
+      additionalNotes: meta.additionalNotes || "",
+      sourceUrls: meta.sourceUrls || [],
       script: text,
       partial,
       createdAt: new Date().toISOString(),
@@ -134,6 +141,23 @@ export default function App() {
     setActiveTab("result");
   }
 
+  function handleEditDraft(entry) {
+    setDraftForm({
+      scriptType: entry.scriptType || "podcast",
+      title: entry.title || "",
+      topic: entry.topic || "",
+      guestName: entry.guestName || "",
+      keyPoints: entry.keyPoints || "",
+      tone: entry.tone || "entertaining",
+      duration: entry.duration || "10",
+      additionalNotes: entry.additionalNotes || "",
+      sourceUrls: Array.isArray(entry.sourceUrls)
+        ? entry.sourceUrls.join("\n")
+        : entry.sourceUrls || "",
+    });
+    setActiveTab("write");
+  }
+
   function handleDeleteHistory(id) {
     const updated = history.filter((h) => h.id !== id);
     setHistory(updated);
@@ -180,7 +204,12 @@ export default function App() {
 
       <main className={styles.main}>
         {activeTab === "write" && (
-          <ScriptForm onGenerate={handleGenerate} isGenerating={isGenerating} />
+          <ScriptForm
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            initialValues={draftForm}
+            onDraftLoaded={() => setDraftForm(null)}
+          />
         )}
         {activeTab === "result" && (
           <ScriptDisplay
@@ -197,6 +226,7 @@ export default function App() {
           <ScriptHistory
             history={history}
             onLoad={handleLoadHistory}
+            onEdit={handleEditDraft}
             onDelete={handleDeleteHistory}
           />
         )}
