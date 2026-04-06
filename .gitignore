@@ -4,3 +4,7 @@ dist/
 .DS_Store
 Thumbs.db
 *.log
+*.docx
+*.pdf
+*.xlsx
+*.key
